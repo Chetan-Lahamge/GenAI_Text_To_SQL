@@ -23,3 +23,10 @@ Data:
 
 Please provide a brief, insightful summary based on this data. Focus on the key takeaways a business user would find valuable. Avoid simply restating the data; instead, interpret what it means.
 """
+
+QUESTION_SUGGESTION_PROMPT_TEMPLATE = """
+Based on the database schema for the table named '{table_name}' with the following columns: {columns}, please generate 4 diverse and insightful questions that a business user might ask.
+
+The output should be a Python-parseable list of strings. For example:
+["What are the top 5 most sold products?", "How many customers are in each age group?"]
+"""

@@ -3,7 +3,24 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from database import get_db_connection, get_table_schema, execute_query
-from llm import configure_llm, get_sql_from_llm
+from llm import configure_llm, get_sql_from_llm, get_question_suggestions_from_llm, get_insights_from_llm
+
+
+def display_example_questions():
+    """Display clickable example questions."""
+    st.markdown("**Try these examples:**")
+    schema = get_table_schema()
+    if schema:
+        examples = get_question_suggestions_from_llm(schema)
+    else:
+        examples = [] # Fallback if schema cannot be retrieved
+
+    if examples:
+        for example in examples:
+            if st.button(example):
+                st.session_state.user_question = example
+    else:
+        st.info("No question suggestions available at the moment.")
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -37,18 +54,8 @@ def display_header():
     st.title("🤖 Retail AI Analyst")
     st.markdown("Ask questions about your retail data in plain English and get answers instantly.")
 
-def display_example_questions():
-    """Display clickable example questions."""
-    st.markdown("**Try these examples:**")
-    examples = [
-        "What are the top 5 most sold products?",
-        "How many customers are in each age group?",
-        "What is the total revenue from the 'Electronics' category?",
-        "Show me all sales from 'New York' in the last week."
-    ]
-    for example in examples:
-        if st.button(example):
-            st.session_state.user_question = example
+display_header()
+display_example_questions()
 
 def display_chat_history():
     """Display the conversation history."""
@@ -57,13 +64,7 @@ def display_chat_history():
             st.markdown(entry["content"])
 
 # --- MAIN LOGIC ---
-import streamlit as st
-import pandas as pd
-from dotenv import load_dotenv
 import re
-
-from database import get_db_connection, get_table_schema, execute_query
-from llm import configure_llm, get_sql_from_llm, get_insights_from_llm
 
 # --- HELPER FUNCTIONS ---
 def extract_sql_query(text):
@@ -113,20 +114,12 @@ def display_intelligent_chart(df, sql_query):
     except Exception as e:
         st.warning(f"Could not generate chart: {e}")
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="Retail AI Analyst",
-    page_icon="🤖",
-    layout="centered",
-)
-
 # --- INITIALIZATION ---
 if "history" not in st.session_state:
     st.session_state.history = []
 
 # --- UI COMPONENTS ---
-st.title("🤖 Retail AI Analyst")
-
+# st.title("🤖 Retail AI Analyst")
 # Display chat history
 for message in st.session_state.history:
     with st.chat_message(message["role"]):
@@ -141,7 +134,13 @@ for message in st.session_state.history:
             st.info(message["insights"])
 
 # --- MAIN LOGIC ---
-if prompt := st.chat_input("Ask your question about the retail data..."):
+if "user_question" not in st.session_state:
+    st.session_state.user_question = ""
+
+if prompt := st.chat_input("Ask your question about the retail data...") or st.session_state.user_question:
+    if st.session_state.user_question:
+        prompt = st.session_state.user_question
+        st.session_state.user_question = "" # Clear it after use
     st.session_state.history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
