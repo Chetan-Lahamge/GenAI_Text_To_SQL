@@ -12,7 +12,7 @@ def configure_llm():
             st.error("API key not found. Please set the GENERATIVEAI_API_KEY environment variable.")
             return None
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel('gemini-1.5-flash')
+        return genai.GenerativeModel('gemini-2.5-flash-lite')
     except Exception as e:
         st.error(f"LLM configuration error: {e}")
         return None
